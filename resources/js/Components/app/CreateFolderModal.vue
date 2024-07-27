@@ -41,13 +41,16 @@
     import TextInput from "../TextInput.vue";
     import InputError from "../InputError.vue";
     import SecondaryButton from "../SecondaryButton.vue";
-    import {useForm} from "@inertiajs/vue3";
+    import {useForm, usePage} from "@inertiajs/vue3";
     import PrimaryButton from "../PrimaryButton.vue";
     import {nextTick, ref} from "vue";
 
     const form = useForm({
-        name: ''
+        name: '',
+        parent_id: null
     });
+
+    const page = usePage();
 
     const folderNameInput = ref(null);
 
@@ -62,6 +65,7 @@
     }
 
     function createFolder(){
+        form.parent_id = page.props.folder.id;
         form.post(route('folder.create'), {
             preserveScroll: true,
             onSuccess: () => {
