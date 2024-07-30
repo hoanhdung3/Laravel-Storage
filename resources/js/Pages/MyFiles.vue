@@ -52,7 +52,8 @@
                     :key="file.id"
                     class="cursor-pointer bg-white border-b transition duration-300 ease-in-out hover:bg-gray-100"
                 >
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 flex items-center">
+                        <FileIcon :file="file" />
                         {{ file.name }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
@@ -77,11 +78,12 @@
     import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
     import {router, Link} from '@inertiajs/vue3';
     import {HomeIcon} from '@heroicons/vue/20/solid'
+    import FileIcon from '@/Components/app/FileIcon.vue';
 
     const {files} = defineProps({
         files: Object,
         folder: Object,
-        ancestors: Array
+        ancestors: Object
     });
 
     function openFolder(file){
