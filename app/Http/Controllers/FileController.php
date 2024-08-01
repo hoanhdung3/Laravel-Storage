@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\DestroyFilesRequest;
 use App\Http\Requests\StoreFileRequest;
 use App\Http\Resources\FileResource;
 use App\Models\File;
@@ -12,7 +13,8 @@ use App\Http\Requests\StoreFolderRequest;
 
 class FileController extends Controller
 {
-    public function myFiles(Request $request, string $folder = null){
+    public function myFiles(Request $request, string $folder = null)
+    {
         if($folder){
             $folder = File::query()->where('created_by', Auth::id())->where('path', $folder)->firstOrFail();
         }
@@ -40,7 +42,8 @@ class FileController extends Controller
         return Inertia::render('MyFiles', compact('files', 'folder', 'ancestors'));
     }
 
-    public function createFolder(StoreFolderRequest $request){
+    public function createFolder(StoreFolderRequest $request)
+    {
         $data = $request->validated();
         $parent = $request->parent;
 
@@ -111,5 +114,30 @@ class FileController extends Controller
         $model->mime = $file->getMimeType();
         $model->size = $file->getSize();
         $parent->appendNode($model);
+    }
+
+    public function destroy(DestroyFilesRequest $request)
+    {
+        $data = $request->validated();
+        $parent = $request->parent;
+
+        // dd($parent);
+
+        if($data['all']){
+            $children = $parent->children;
+
+            foreach($children as $child){
+                $child->delete();
+            }
+        }else{
+            foreach($data['ids'] ?? [] as $id){
+                $file = File::find($id);
+                if($file){
+                    $file->delete();
+                }
+            }
+        }
+
+        return to_route('myFiles', ['folder' => $parent->path]);
     }
 }
