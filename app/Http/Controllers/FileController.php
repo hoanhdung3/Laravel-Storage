@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\AddToFavouritesRequest;
 use App\Http\Requests\TrashFilesRequest;
 use App\Models\File;
+use App\Models\StarredFile;
+use Carbon\Carbon;
 use Inertia\Inertia;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
@@ -25,12 +28,24 @@ class FileController extends Controller
         if(!$folder){
             $folder = $this->getRoot();
         }
+
+        $favourites = (int)$request->get('favourites');
         
-        $files = File::query()->where('parent_id', $folder->id)
+        $query = File::query()
+            ->select('files.*')
+            ->with('starred')
+            ->where('parent_id', $folder->id)
             ->where('created_by', Auth::id())
             ->orderBy('is_folder', 'DESC')
-            ->orderBy('created_at', 'DESC')
-            ->paginate(10);
+            ->orderBy('files.created_at', 'DESC')
+            ->orderBy('files.id', 'desc');
+
+        if($favourites === 1){
+            $query->join('starred_files', 'starred_files.file_id', '=', 'files.id')
+            ->where('starred_files.user_id', Auth::id());
+        }
+
+        $files = $query->paginate(10);
 
         $files = FileResource::collection($files);
 
@@ -277,5 +292,29 @@ class FileController extends Controller
         }
 
         return to_route('trash');
+    }
+
+    public function addToFavourites(AddToFavouritesRequest $request)
+    {
+        $data = $request->validated();
+
+        $id = $data['id'];
+        $file = File::find($id);
+        $user_id = Auth::id();
+
+        $starredFile = StarredFile::query()->where('file_id', $file->id)->where('user_id', $user_id)->first();
+
+        if($starredFile){
+            $starredFile->delete();
+        }else{
+            StarredFile::create([
+                'file_id' => $file->id,
+                'user_id' => $user_id,
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now()
+            ]);
+        }
+
+        return redirect()->back();
     }
 }
