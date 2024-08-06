@@ -28,7 +28,9 @@
         ids: {
             type: Array,
             required: false
-        }
+        },
+        sharedWithMe: false,
+        sharedByMe: false
     });
 
     const emit = defineEmits(['delete']);
@@ -39,7 +41,9 @@
         }
 
         const p = new URLSearchParams();
-        p.append('parent_id', page.props.folder.id);
+        if(page.props.folder?.id){
+            p.append('parent_id', page.props.folder?.id);
+        }
         if(props.all){
             p.append('all', props.all ? 1 : 0);
         }else{
@@ -47,8 +51,13 @@
                 p.append('ids[]', id);
             }
         }
-
-        httpGet(route('file.download') + '?' + p.toString())
+        let url = route('file.download')
+        if(props.sharedWithMe){
+            url = route('file.downloadSharedWithMe');
+        }else if(props.sharedByMe){
+            url = route('file.downloadSharedByMe');
+        }
+        httpGet(url + '?' + p.toString())
         .then(res => {
             if(!res.url) return;
 
